@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head><title>Admin Control</title></head>
+<body style="background:#111; color:#fff; padding:30px; font-family:sans-serif;">
+    <div id="auth" style="text-align:center; margin-top:100px;">
+        <h2>🔒 Admin Access</h2>
+        <input type="password" id="pass" placeholder="Enter Password"> <button onclick="login()">Login</button>
+    </div>
+    <div id="main" style="display:none;">
+        <h2>📋 Pending Approvals</h2>
+        <div id="list"></div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+        firebase.initializeApp({databaseURL: "https://the-10-million-pixels-plus-default-rtdb.firebaseio.com/"});
+        const db = firebase.database();
+        function login(){ if(document.getElementById('pass').value==='KAWSARahmed22@@'){document.getElementById('auth').style.display='none';document.getElementById('main').style.display='block';load();} else alert("Wrong!"); }
+        function load(){
+            db.ref('pending_orders').on('value', s => {
+                const l = document.getElementById('list'); l.innerHTML = "";
+                const d = s.val(); if(!d) { l.innerHTML="No pending orders."; return; }
+                Object.keys(d).forEach(id => {
+                    l.innerHTML += `<div style="border:1px solid #D4AF37; padding:15px; margin:10px 0; background:#222;">
+                        ID: ${id} | Name: ${d[id].name} | Pixels: ${d[id].pixelCount}<br><br>
+                        <input type="text" id="img_${id}" placeholder="ImgBB Direct Link" style="width:100%; padding:5px;"><br>
+                        <input type="text" id="url_${id}" placeholder="Website URL (https://...)" style="width:100%; padding:5px; margin-top:5px;"><br>
+                        <button onclick="app('${id}')" style="background:green; color:white; margin-top:10px; padding:10px; cursor:pointer;">APPROVE & MAKE LIVE</button>
+                    </div>`;
+                });
+            });
+        }
+        function app(id){
+            const img = document.getElementById('img_'+id).value;
+            const url = document.getElementById('url_'+id).value;
+            if(!img || !url) return alert("Provide both links!");
+            db.ref('pending_orders/'+id).once('value', s => {
+                let data = s.val(); data.imageUrl = img; data.websiteUrl = url;
+                db.ref('pixels/'+id).set(data).then(()=>db.ref('pending_orders/'+id).remove());
+                alert("Image is now live on map!");
+            });
+        }
+    </script>
+</body>
+</html>
